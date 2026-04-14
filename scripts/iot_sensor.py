@@ -1,30 +1,30 @@
 #!/usr/bin/env python3
 """
+    
+brief: Simulates a normal IoT sensor device sending periodic UDP packets to the victim server.
 
-FILE: iot_sensor.py
-PROJECT: SDN IoT Botnet DDoS Detection.
-AUTHOR: Kananelo Chabeli.
+decscription: Generates the BASELINE normal traffic of a typical IoT sensor. 
+            This data is modeled by UDP packet sent to the  victim server every few seconds.
+            Each packet contains a small JSON payload with a sensor reading (e.g. temperature, humidity, motion) and a timestamp.
 
-DESCRIPTION:
-    Simulates a normal IoT sensor device sending periodic UDP packets to
-    the victim server (server).  Generates the BASELINE normal traffic that
-    the entropy detector needs in order to establish a high-entropy reference.
+            Runs on Mininet hosts which emulate IoT devices.  Each host sends one small JSON UDP packet every
+            INTERVAL seconds, mimicking temperature / humidity / motion sensors.
+A
+            Packet payload (JSON, ~60 bytes):
+                {"src": "h1", "sensor": "temperature", "value": 23.4, "ts": ...}
 
-    Runs on hosts h1–h6.  Each host sends one small JSON UDP packet every
-    INTERVAL seconds, mimicking temperature / humidity / motion sensors.
-
-    Packet payload (JSON, ~60 bytes):
-        {"src": "h1", "sensor": "temperature", "value": 23.4, "ts": ...}
-
-USAGE (inside Mininet or directly):
+    USAGE (inside Mininet or directly):
     python3 iot_sensor.py --src N1 --dst 192.168.3.1
     python3 iot_sensor.py --src N2 --dst 192.168.3.1 --interval 3
 
-ARGUMENTS:
+    ARGUMENTS:
     --src       Logical host name (used in payload, e.g. N1)
     --dst       Victim server IP  (default 192.168.3.1 as seen from Mininet hosts)
     --port      UDP destination port (default 9999) 
     --interval  Seconds between packets (default 2.0)
+
+@author:  Kananelo Chabeli
+@date:    2024-03-25
 """
 
 import socket
