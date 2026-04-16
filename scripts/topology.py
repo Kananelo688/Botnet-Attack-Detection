@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 FILE: topology.py
-PROJECT: ML-Assisted Detection of  IoT Botnet DDoS Attacks: An Ensemble Learning Approach
+
+
 DESCRIPTION:
     Builds the Mininet emulated IoT network and connects it to the POX
     SDN controller.
@@ -14,7 +15,7 @@ DESCRIPTION:
     Topology:
         N1–N10  : IoT Sensor Nodes/Devices(192.168.1.1 – 192.168.1.10)
         Server     : Victim server (192.168.1.11)
-        N10     : C&C attacker node (192.168.1.10), this node will send trigger signals to the 
+        N12     : C&C attacker node (192.168.1.12), this node will send trigger signals to the 
         botnet hosts to start the attack.
         s1, s2, s3     : Open vSwitch, managed by remote POX controller
      five nodes (N1-N5) connect to s1, while other five nodes (N6-N10) connects to s2. switches s1 and s2, connect to s3 which then 

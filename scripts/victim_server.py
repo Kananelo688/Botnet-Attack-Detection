@@ -1,19 +1,10 @@
 #!/usr/bin/env python3
 """
-FILE: victim_server.py (UPDATED FOR MULTI-ATTACK DETECTION)
-PROJECT: ML-Assisted Detection of IoT Botnet DDoS Attacks: An Ensemble Learning Approach
-AUTHOR: Kananelo Chabeli
-DATE: 2024 - Updated 2026
 
-DESCRIPTION:
-    Runs on server (the victim). Listens on both TCP and UDP ports to capture
-    all attack traffic types from the CICDDoSIOT2024 dataset:
-      - TCP attacks: SYN floods, ACK floods, HTTP floods
-      - UDP attacks: UDP floods
-      - ICMP attacks: ICMP floods, ICMP fragmentation
+brief: Simulates remote sensor in an Iot Network that recieves packects from the IoT devices and performs some processing.
 
-    Separates traffic by protocol, applies per-protocol thresholds (since attack
-    signatures differ by type), and logs per-source metrics to CSV for post-analysis.
+decscription:
+    Runs on server (the victim). Listens on both TCP and UDP ports to capture all attack traffic types from the CICDDoSIOT2024 dataset:
 
     This provides GROUND-TRUTH measurements essential for:
       1. Computing Mitigation Effectiveness (how much attack traffic POX blocked)
@@ -47,9 +38,6 @@ import argparse
 import psutil
 from collections import defaultdict
 
-# ============================================================================
-# CONSTANTS — Attack Detection Thresholds
-# ============================================================================
 
 REPORT_INTERVAL = 5  # seconds between rate computation and CSV logging
 
@@ -64,9 +52,6 @@ ATTACK_THRESHOLDS = {
 LOG_DIR = '/home/chabeli/SDN_IoT/sdn-iot/logs'
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# ============================================================================
-# SHARED STATE — Per-Protocol Packet Counters
-# ============================================================================
 
 # Structure: {protocol: {src_ip: count}}
 # Reset every REPORT_INTERVAL by reporter thread
@@ -214,123 +199,6 @@ def icmp_listener():
 
 
 # ============================================================================
-# REPORTER — Log results every REPORT_INTERVAL seconds
-# ============================================================================
-
-def reporter(interval: float, csv_path: str, cpu_log_path: str):
-    """
-    Main reporting loop: wake every `interval` seconds, compute rates,
-    log to CSV, log CPU utilization, and print summary.
-
-    Runs in main thread.
-
-    Args:
-        interval: seconds between reports (typically 5)
-        csv_path: where to write traffic CSV log file
-        cpu_log_path: where to write CPU utilization log file
-    """
-    # Open CSV file and write header
-    f = open(csv_path, 'w', newline='')
-    writer = csv.writer(f)
-    writer.writerow([
-        'timestamp', 'src_ip', 'protocol', 'interval_pkts',
-        'rate_pps', 'total_pkts', 'label', 'threshold_pps'
-    ])
-    f.flush()
-
-    # Open CPU log file and write header
-    cpu_f = open(cpu_log_path, 'w', newline='')
-    cpu_writer = csv.writer(cpu_f)
-    cpu_writer.writerow(['timestamp', 'cpu_percent'])
-    cpu_f.flush()
-
-    # Get process object for CPU monitoring
-    proc = psutil.Process(os.getpid())
-
-    print(f'[VictimServer] Reporter writing traffic to {csv_path}')
-    print(f'[VictimServer] Reporter writing CPU to {cpu_log_path}')
-    print(f'[VictimServer] Report interval: {interval}s')
-    print()
-
-    while True:
-        time.sleep(interval)
-        now = time.strftime('%Y-%m-%d %H:%M:%S')
-        now_ts = int(time.time())
-
-        # Log CPU utilization
-        try:
-            cpu_percent = proc.cpu_percent(interval=0.1)
-            cpu_writer.writerow([now_ts, round(cpu_percent, 2)])
-            cpu_f.flush()
-        except Exception as e:
-            print(f'[VictimServer] Error reading CPU: {e}')
-
-        # Atomic snapshot + reset interval counters
-        with counts_lock:
-            snapshots = {
-                'TCP': dict(interval_counts['TCP']),
-                'UDP': dict(interval_counts['UDP']),
-                'ICMP': dict(interval_counts['ICMP']),
-            }
-            # Reset for next interval
-            interval_counts['TCP'].clear()
-            interval_counts['UDP'].clear()
-            interval_counts['ICMP'].clear()
-
-        # Check if any traffic at all
-        total_traffic = sum(
-            sum(snapshots[proto].values()) for proto in ['TCP', 'UDP', 'ICMP']
-        )
-        if total_traffic == 0:
-            print(f'[{now}] No traffic in last {interval}s')
-            continue
-
-        # ────────────────────────────────────────────────────────────────
-        # Print summary header
-        # ────────────────────────────────────────────────────────────────
-        print(f'\n[{now}] ────── VICTIM TRAFFIC REPORT ──────')
-
-        # ────────────────────────────────────────────────────────────────
-        # Process each protocol separately
-        # ────────────────────────────────────────────────────────────────
-        for protocol in ['TCP', 'UDP', 'ICMP']:
-            snapshot = snapshots[protocol]
-            if not snapshot:
-                continue
-
-            protocol_total_rate = sum(v for v in snapshot.values()) / interval
-            threshold = ATTACK_THRESHOLDS[protocol]
-
-            print(f'\n  {protocol} Traffic ({len(snapshot)} source(s)): '
-                  f'{protocol_total_rate:.1f} pkt/s | Threshold: {threshold} pkt/s')
-            print(f'  {"-" * 60}')
-
-            # Sort by packet count (descending) for visibility
-            for src, count in sorted(snapshot.items(),
-                                     key=lambda x: x[1], reverse=True):
-                rate = count / interval
-                total = total_counts[protocol][src]
-
-                # Label: ATTACK if exceeds threshold, else NORMAL
-                label = 'ATTACK' if rate > threshold else 'NORMAL'
-                icon = '⚠️ ' if label == 'ATTACK' else '✅'
-
-                print(f'    {icon} {src:15s}  {rate:7.1f} pkt/s  '
-                      f'[Δ={count:5d}  total={total:6d}]  [{label}]')
-
-                # Write to CSV
-                writer.writerow([
-                    now, src, protocol, count, round(rate, 2),
-                    total, label, threshold
-                ])
-
-        print(f'  {"=" * 60}\n')
-        f.flush()
-
-    f.close()
-
-
-# ============================================================================
 # MAIN
 # ============================================================================
 
@@ -351,13 +219,11 @@ if __name__ == '__main__':
     os.makedirs(os.path.dirname(cpu_log_path), exist_ok=True)
 
     print('=' * 70)
-    print('  VICTIM SERVER (Multi-Protocol Attack Detection)')
+    print('  VICTIM SERVER STARTING...')
     print('=' * 70)
     print(f'  UDP Port: {args.port_udp} (sensors + UDP floods)')
     print(f'  TCP Port: {args.port_tcp} (HTTP floods + SYN/ACK)')
     print(f'  Report Interval: {args.interval}s')
-    print(f'  CSV Log: {csv_path}')
-    print(f'  CPU Log: {cpu_log_path}')
     print('=' * 70)
     print()
 
@@ -377,8 +243,8 @@ if __name__ == '__main__':
     )
     t_icmp.start()
 
-    # Reporter runs in main thread (blocking)
-    try:
-        reporter(args.interval, csv_path, cpu_log_path)
-    except KeyboardInterrupt:
-        print('\n[VictimServer] Shutting down.')
+    while True:
+        try:
+            pass # Main thread just keeps running to allow daemon threads to operate
+        except KeyboardInterrupt:
+            print('\n[VictimServer] Shutting down.')

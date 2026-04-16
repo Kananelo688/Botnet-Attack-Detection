@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """
+
+
 FILE: cnc_trigger.py (DESIGNED FOR CICDDOSIOT2024 ATTACK TYPES)
 PROJECT: ML-Assisted Detection of IoT Botnet DDoS Attacks: An Ensemble Learning Approach
 AUTHOR: Kananelo Chabeli
@@ -67,9 +69,6 @@ import threading
 import multiprocessing
 from typing import List
 
-# ============================================================================
-# IMPORTS — Attack-specific libraries
-# ============================================================================
 
 # Scapy: packet crafting for advanced attacks (fragmentation, ACK floods)
 try:
@@ -90,9 +89,6 @@ except ImportError:
     print("           Install with: pip install requests")
 PYTHON = "/home/chabeli/.pyenv/shims/python3"  # Path to Python interpreter (adjust if needed)
 
-# ============================================================================
-# CONSTANTS
-# ============================================================================
 
 LOG_DIR ='/home/chabeli/SDN_IoT/sdn-iot/logs'
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -111,9 +107,7 @@ ATTACK_TYPES = [
 HTTP_PORT = 80
 ATTACK_DETAILS_FILE_CNC_TRIGGER = '/home/chabeli/SDN_IoT/sdn-iot/sim_results/attack_details_cnc_trigger.json'
 SYN_FILENAME = '/home/chabeli/SDN_IoT/sdn-iot/syn.txt'
-# ============================================================================
-# UTILITY FUNCTIONS
-# ============================================================================
+
 
 def print_banner(target, duration, attack_type):
     """
@@ -163,10 +157,6 @@ def log_attack_stop(attack_type, start_ts, end_ts):
         f.write(f'ATTACK_STOP   ts={end_ts:.3f}  type={attack_type:20s}  '
                 f'duration={duration:7.1f}s\n')
 
-
-# ============================================================================
-# BOTNET RECRUITMENT — Parse and coordinate attacks across multiple hosts
-# ============================================================================
 
 def parse_botnet_list(botnet_spec: str) -> List[str]:
     """
@@ -441,11 +431,6 @@ def run_distributed_attack(target: str, attack_type: str, botnet_hosts: List[str
         f.write(f'BENIGN\n')
 
 
-
-# ============================================================================
-# ATTACK 1: ACK_FRAGMENTATION
-# ============================================================================
-
 def attack_ack_fragmentation(target, duration):
     """
     TCP ACK flood with IP fragmentation.
@@ -503,10 +488,6 @@ def attack_ack_fragmentation(target, duration):
               f"Rate: {count/elapsed:.0f} pkt/s\n")
 
 
-# ============================================================================
-# ATTACK 2: HTTP_FLOOD
-# ============================================================================
-
 def attack_http_flood(target, duration, port=HTTP_PORT):
     """
     HTTP GET flood (Layer 7 application attack).
@@ -561,10 +542,6 @@ def attack_http_flood(target, duration, port=HTTP_PORT):
               f"Rate: {count/elapsed:.0f} req/s\n")
 
 
-# ============================================================================
-# ATTACK 3: ICMP_FLOOD
-# ============================================================================
-
 def attack_icmp_flood(target, duration):
     """
     ICMP Echo flood (ping bomb).
@@ -617,10 +594,6 @@ def attack_icmp_flood(target, duration):
         print(f"[C&C] ✓ ICMP_FLOOD complete.")
         print(f"      Duration: {elapsed:.1f}s\n")
 
-
-# ============================================================================
-# ATTACK 4: ICMP_FRAGMENTATION
-# ============================================================================
 
 def attack_icmp_fragmentation(target, duration):
     """
@@ -675,9 +648,6 @@ def attack_icmp_fragmentation(target, duration):
               f"Rate: {count/elapsed:.0f} pkt/s\n")
 
 
-# ============================================================================
-# ATTACK 5: SYN_FLOOD
-# ============================================================================
 
 def attack_syn_flood(target, duration):
     """
@@ -727,11 +697,6 @@ def attack_syn_flood(target, duration):
         elapsed = end_ts - start_ts
         print(f"[C&C] ✓ SYN_FLOOD complete.")
         print(f"      Duration: {elapsed:.1f}s\n")
-
-
-# ============================================================================
-# ATTACK 6: UDP_FLOOD
-# ============================================================================
 
 def attack_udp_flood(target, duration):
     """
@@ -783,10 +748,6 @@ def attack_udp_flood(target, duration):
         print(f"      Duration: {elapsed:.1f}s\n")
 
 
-# ============================================================================
-# ATTACK DISPATCHER
-# ============================================================================
-
 def run_attack(target, attack_type, duration):
     """
     Dispatch to the correct attack handler based on attack_type.
@@ -816,10 +777,6 @@ def run_attack(target, attack_type, duration):
     print_banner(target, duration, attack_type)
     attack_map[attack_type](target, duration)
 
-
-# ============================================================================
-# RANDOM ATTACK MODE
-# ============================================================================
 
 def run_random_attacks(target, num_attacks, interval, duration_per_attack):
     """
@@ -862,10 +819,6 @@ def run_random_attacks(target, num_attacks, interval, duration_per_attack):
     print('  ALL RANDOM ATTACKS COMPLETED')
     print('=' * 75 + '\n')
 
-
-# ============================================================================
-# MAIN
-# ============================================================================
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -967,9 +920,7 @@ EXAMPLES:
 
     args = parser.parse_args()
 
-    # ────────────────────────────────────────────────────────────────────
-    # Check for dependencies
-    # ────────────────────────────────────────────────────────────────────
+
     print()
     if not SCAPY_AVAILABLE:
         print("⚠️  WARNING: Some attacks require Scapy.")
@@ -979,9 +930,7 @@ EXAMPLES:
         print("⚠️  WARNING: HTTP flood requires requests library.")
         print("   Install: pip install requests\n")
 
-    # ────────────────────────────────────────────────────────────────────
-    # Dispatch based on recruitment vs single attack mode
-    # ────────────────────────────────────────────────────────────────────
+
     attack_details = {}
     if args.dataset:
         with open(SYN_FILENAME, 'w') as f:
