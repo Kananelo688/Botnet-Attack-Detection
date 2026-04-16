@@ -134,7 +134,7 @@ In a dedicated terminal:
 
 ```bash
 cd ~/pox
-python3 pox.py log.level --DEBUG ext.threshold_detector
+python3 pox.py log.level --DEBUG controller
 ```
 
 ### Step 2 — Start the Mininet topology
@@ -142,27 +142,20 @@ python3 pox.py log.level --DEBUG ext.threshold_detector
 In a second terminal:
 
 ```bash
-sudo python3 scripts/topology.py
+sudo python3 scripts/topology.py --mode DATASET
 ```
 
-Wait for the Mininet CLI prompt. Normal IoT sensor traffic from hosts `h1`–`h6` starts automatically.
+Wait for the Mininet CLI prompt. Normal IoT sensor traffic from hosts `N1`–`N10` starts automatically.
 
 ### Step 3 — Trigger attack traffic (from Mininet CLI)
 
 ```
-mininet> h8 python3 scripts/cnc_trigger.py --mode syn --duration 1200
-mininet> h1 hping3 --syn --flood -V -p 80 192.168.1.7 &
-mininet> h2 hping3 --syn --flood -V -p 80 192.168.1.7 &
-mininet> h3 hping3 --syn --flood -V -p 80 192.168.1.7 &
+mininet> h8 python3 scripts/cnc_trigger.py --attack [UDP_FLOOD] --botnet N1-N10 --duration 1200
 ```
 
-Replace `--mode syn` with `--mode udp` or `--mode icmp` for other attack variants.
+Replace `[UDP_FLOOD]` with other attack variants.
 
 ### Step 4 — Back up logs
-
-```bash
-cp -r logs/ logs_<attack_type>_run1/
-```
 
 Logs are written to the `logs/` directory as CSV files compatible with the notebook pipeline.
 
